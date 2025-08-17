@@ -16,6 +16,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 
 class FocusMonitorService : Service() {
@@ -82,8 +83,8 @@ class FocusMonitorService : Service() {
         )
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("专注搜索助手")
-            .setContentText("正在监测您在$targetAppName的专注状态")
+            .setContentTitle("Focus Search Assistant")
+            .setContentText("Monitoring your focus status in $targetAppName")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
@@ -254,8 +255,8 @@ class FocusMonitorService : Service() {
         
         // 更新通知
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("专注搜索助手")
-            .setContentText("专注监测已结束")
+            .setContentTitle("Focus Search Assistant")
+            .setContentText("Focus monitoring has ended")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setOngoing(false)
             .build()
