@@ -33,7 +33,9 @@ class MainActivity : AppCompatActivity() {
         AppInfo("抖音", "com.ss.android.ugc.aweme", "douyin"),
         AppInfo("小红书", "com.xingin.xhs", "xiaohongshu"),
         AppInfo("B站", "tv.danmaku.bili", "bilibili"),
-        AppInfo("微信读书", "com.tencent.weread", "weread")
+        AppInfo("微信读书", "com.tencent.weread", "weread"),
+        AppInfo("微博", "com.sina.weibo", "weibo"),
+        AppInfo("豆瓣", "com.douban.frodo", "douban")
     )
 
     data class AppInfo(val name: String, val packageName: String, val searchPrefix: String)
@@ -99,13 +101,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hasUsageStatsPermission(): Boolean {
-        val packageManager = packageManager
-        val applicationInfo = ApplicationInfo()
-        try {
-            packageManager.getApplicationInfo("android", 0)
-            return true
-        } catch (e: PackageManager.NameNotFoundException) {
-            return false
+        return try {
+            val packageManager = packageManager
+            val applicationInfo = packageManager.getApplicationInfo(packageName, 0)
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 
@@ -189,12 +190,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun createSearchIntent(app: AppInfo, keyword: String): Intent? {
         return try {
+            val encodedKeyword = java.net.URLEncoder.encode(keyword, "UTF-8")
             when (app.searchPrefix) {
                 "baidu" -> {
                     // 百度搜索深度链接
                     Intent().apply {
                         action = Intent.ACTION_VIEW
-                        data = android.net.Uri.parse("baiduboxapp://search?word=${java.net.URLEncoder.encode(keyword, "UTF-8")}")
+                        data = android.net.Uri.parse("baiduboxapp://search?word=$encodedKeyword")
                         setPackage(app.packageName)
                     }
                 }
@@ -202,7 +204,7 @@ class MainActivity : AppCompatActivity() {
                     // 淘宝搜索深度链接
                     Intent().apply {
                         action = Intent.ACTION_VIEW
-                        data = android.net.Uri.parse("taobao://s.taobao.com?q=${java.net.URLEncoder.encode(keyword, "UTF-8")}")
+                        data = android.net.Uri.parse("taobao://s.taobao.com?q=$encodedKeyword")
                         setPackage(app.packageName)
                     }
                 }
@@ -210,7 +212,63 @@ class MainActivity : AppCompatActivity() {
                     // 京东搜索深度链接
                     Intent().apply {
                         action = Intent.ACTION_VIEW
-                        data = android.net.Uri.parse("openapp.jdmobile://virtual?params={\"category\":\"jump\",\"des\":\"search\",\"keyword\":\"${java.net.URLEncoder.encode(keyword, "UTF-8")}\"}")
+                        data = android.net.Uri.parse("openapp.jdmobile://virtual?params={\"category\":\"jump\",\"des\":\"search\",\"keyword\":\"$encodedKeyword\"}")
+                        setPackage(app.packageName)
+                    }
+                }
+                "zhihu" -> {
+                    // 知乎搜索深度链接
+                    Intent().apply {
+                        action = Intent.ACTION_VIEW
+                        data = android.net.Uri.parse("zhihu://search?q=$encodedKeyword")
+                        setPackage(app.packageName)
+                    }
+                }
+                "douyin" -> {
+                    // 抖音搜索深度链接
+                    Intent().apply {
+                        action = Intent.ACTION_VIEW
+                        data = android.net.Uri.parse("snssdk1128://search?q=$encodedKeyword")
+                        setPackage(app.packageName)
+                    }
+                }
+                "xiaohongshu" -> {
+                    // 小红书搜索深度链接
+                    Intent().apply {
+                        action = Intent.ACTION_VIEW
+                        data = android.net.Uri.parse("xhsdiscover://search?q=$encodedKeyword")
+                        setPackage(app.packageName)
+                    }
+                }
+                "bilibili" -> {
+                    // B站搜索深度链接
+                    Intent().apply {
+                        action = Intent.ACTION_VIEW
+                        data = android.net.Uri.parse("bilibili://search?q=$encodedKeyword")
+                        setPackage(app.packageName)
+                    }
+                }
+                "weread" -> {
+                    // 微信读书搜索深度链接
+                    Intent().apply {
+                        action = Intent.ACTION_VIEW
+                        data = android.net.Uri.parse("weread://search?q=$encodedKeyword")
+                        setPackage(app.packageName)
+                    }
+                }
+                "weibo" -> {
+                    // 微博搜索深度链接
+                    Intent().apply {
+                        action = Intent.ACTION_VIEW
+                        data = android.net.Uri.parse("sinaweibo://search?q=$encodedKeyword")
+                        setPackage(app.packageName)
+                    }
+                }
+                "douban" -> {
+                    // 豆瓣搜索深度链接
+                    Intent().apply {
+                        action = Intent.ACTION_VIEW
+                        data = android.net.Uri.parse("douban://search?q=$encodedKeyword")
                         setPackage(app.packageName)
                     }
                 }

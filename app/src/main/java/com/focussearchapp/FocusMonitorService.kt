@@ -141,18 +141,19 @@ class FocusMonitorService : Service() {
                 val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager
                 val time = System.currentTimeMillis()
                 
-                // 获取最近1分钟内使用过的应用
+                // 获取最近2分钟内使用过的应用，增加时间范围提高准确性
                 val stats = usageStatsManager.queryUsageStats(
                     android.app.usage.UsageStatsManager.INTERVAL_DAILY,
-                    time - 1000 * 60,
+                    time - 1000 * 60 * 2,
                     time
                 )
                 
                 if (stats.isNotEmpty()) {
                     var lastUsedApp: android.app.usage.UsageStats? = null
                     for (usageStats in stats) {
-                        // 过滤掉系统应用
+                        // 过滤掉系统应用，并且只考虑最近有使用的应用
                         if (!isSystemApp(usageStats.packageName) && 
+                            usageStats.lastTimeUsed > time - 1000 * 60 * 2 &&
                             (lastUsedApp == null || usageStats.lastTimeUsed > lastUsedApp.lastTimeUsed)) {
                             lastUsedApp = usageStats
                         }
@@ -199,6 +200,7 @@ class FocusMonitorService : Service() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 else
+                    @Suppress("DEPRECATION")
                     WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 android.graphics.PixelFormat.TRANSLUCENT
@@ -234,7 +236,9 @@ class FocusMonitorService : Service() {
     private fun hideOverlay() {
         try {
             overlayView?.let { view ->
-                windowManager?.removeView(view)
+                if (windowManager != null && view.isAttachedToWindow) {
+                    windowManager?.removeView(view)
+                }
                 overlayView = null
             }
         } catch (e: Exception) {
@@ -253,21 +257,29 @@ class FocusMonitorService : Service() {
         }
         hideOverlay()
         
-        // 更新通知
-        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Focus Search Assistant")
-            .setContentText("Focus monitoring has ended")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setOngoing(false)
-            .build()
-        
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.notify(NOTIFICATION_ID, notification)
-        
-        // 延迟停止服务
-        handler.postDelayed({
-            stopSelf()
-        }, 5000)
+        try {
+            // 更新通知
+            val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("Focus Search Assistant")
+                .setContentText("Focus monitoring has ended")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setOngoing(false)
+                .build()
+            
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager?.notify(NOTIFICATION_ID, notification)
+            
+            // 延迟停止服务
+            handler.postDelayed({
+                try {
+                    stopSelf()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }, 5000)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -275,7 +287,11 @@ class FocusMonitorService : Service() {
     }
 
     override fun onDestroy() {
+        try {
+            stopMonitoring()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         super.onDestroy()
-        stopMonitoring()
     }
 }
